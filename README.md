@@ -1,5 +1,5 @@
 # GenericEcommerce.StripeJS
-Accept JS Payment gateway for Generic Ecommerce module
+Stripe JS Payment gateway for Generic Ecommerce module
 
 To use make sure your application is already using the Generic.Ecommerce solution.  
 
@@ -8,5 +8,5 @@ services.RegisterStripeJS(new StripeJSConfiguration("7ae4gSdBP6pbLVkAXeRLSmFyuWx
 
 Create a Payment Option Provider in the Kentico Admin with a Code Name of "StripeJS"
 
-You can optionally provide your own acceptjs view using the 
+You can optionally provide your own stripejs view using the 
 PayentGatewayView property of the StripeJSConfiguration.
