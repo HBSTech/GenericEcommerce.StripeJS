@@ -54,10 +54,11 @@ namespace Generic.StripeJSPaymentGateway.Controllers
                     "card"
                 }
             };
+            (options.Metadata ??= new Dictionary<string, string>())
+                .Add("OrderID", order.OrderID.ToString());
 
             var requestOptions = new RequestOptions
             {
-                ApiKey = StripeJSOptions.StripeJSApiLoginID(),
                 IdempotencyKey = Guid.NewGuid().ToString(),
                 StripeAccount = StripeJSOptions.StripeJSAccountID()
             };
@@ -69,7 +70,7 @@ namespace Generic.StripeJSPaymentGateway.Controllers
             }
             catch (StripeException e)
             {
-                if (e.StripeError.Type == "card_error")
+                if (e?.StripeError?.Type == "rate_limit")
                 {
                     return new JsonResult(new { Message = "Failed Transaction. Rate Limit reached.  Please wait 60 seconds and try again" });
                 }
@@ -79,18 +80,18 @@ namespace Generic.StripeJSPaymentGateway.Controllers
                     PaymentResultInfo result = new PaymentResultInfo
                     {
                         PaymentDate = DateTime.Now,
-                        PaymentDescription = $"Failed Transaction. {e.StripeError.Code}: {e.StripeError.Message}.",
+                        PaymentDescription = $"Failed Transaction. {e?.StripeError?.Code}: {e?.StripeError?.Message}.",
                         PaymentIsCompleted = false,
                         PaymentIsFailed = true,
-                        PaymentTransactionID = e.StripeError.StripeResponse.RequestId,
-                        PaymentStatusValue = $"Response Code: {e.StripeError.Code}, Message: {e.StripeError.Message},  Description: { e.StripeError.ErrorDescription}",
+                        PaymentTransactionID = e?.StripeError?.StripeResponse?.RequestId,
+                        PaymentStatusValue = $"Response Code: {e?.StripeError?.Code}, Message: {e?.StripeError?.Message},  Description: { e?.StripeError?.ErrorDescription}",
                         PaymentMethodName = "StripeJS"
                     };
 
                     // Saves the payment result to the database
                     order.UpdateOrderStatus(result);
 
-                    return new JsonResult(new { error = $"Failed Transaction. {e.StripeError.Code}: {e.StripeError.Message}.  Please contact us and refrence {order.OrderID}." });
+                    return new JsonResult(new { error = $"Failed Transaction. {e?.StripeError?.Code}: {e?.StripeError?.Message}.  Please contact us and refrence {order?.OrderID}." });
                 }
             }
         }
@@ -101,7 +102,6 @@ namespace Generic.StripeJSPaymentGateway.Controllers
         {
             var requestOptions = new RequestOptions
             {
-                ApiKey = StripeJSOptions.StripeJSApiLoginID(),
                 IdempotencyKey = Guid.NewGuid().ToString(),
                 StripeAccount = StripeJSOptions.StripeJSAccountID() 
             };
@@ -141,18 +141,18 @@ namespace Generic.StripeJSPaymentGateway.Controllers
                 PaymentResultInfo result = new PaymentResultInfo
                 {
                     PaymentDate = DateTime.Now,
-                    PaymentDescription = $"Failed Transaction. {e.StripeError.Code}: {e.StripeError.Message}.",
+                    PaymentDescription = $"Failed Transaction. {e?.StripeError?.Code}: {e?.StripeError?.Message}.",
                     PaymentIsCompleted = false,
                     PaymentIsFailed = true,
-                    PaymentTransactionID = e.StripeError.StripeResponse.RequestId,
-                    PaymentStatusValue = $"Response Code: {e.StripeError.Code}, Message: {e.StripeError.Message},  Description: { e.StripeError.ErrorDescription}",
+                    PaymentTransactionID = e?.StripeError?.StripeResponse?.RequestId,
+                    PaymentStatusValue = $"Response Code: {e?.StripeError?.Code}, Message: {e?.StripeError?.Message},  Description: { e?.StripeError?.ErrorDescription}",
                     PaymentMethodName = "StripeJS"
                 };
 
                 // Saves the payment result to the database
                 order.UpdateOrderStatus(result);
 
-                return new JsonResult(new { Message = $"Failed Transaction. {e.StripeError.Code}: {e.StripeError.Message}.  Please contact us and refrence {order.OrderID}." });
+                return new JsonResult(new { Message = $"Failed Transaction. {e?.StripeError?.Code}: {e?.StripeError?.Message}.  Please contact us and refrence {order?.OrderID}." });
             }
             return new JsonResult(new { Message = "Transaction Failed." });
         }

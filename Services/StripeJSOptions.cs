@@ -13,9 +13,9 @@ namespace Generic.StripeJSPaymentGateway
 
         public StripeJSConfiguration StripeJSConfiguration { get; }
 
-        public string StripeJSApiLoginID()
+        public string StripeJSSecretKey()
         {
-            return StripeJSConfiguration.StripeJSApiLoginID;
+            return StripeJSConfiguration.StripeJSSecretKey;
         }
 
         public string StripeJSAccountID()

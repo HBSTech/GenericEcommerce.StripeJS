@@ -2,10 +2,10 @@
 {
     public class StripeJSConfiguration
     {
-        public StripeJSConfiguration(string stripeJSPublishableKey, string stripeJSApiLoginID, string stripeJSAccountID)
+        public StripeJSConfiguration(string stripeJSPublishableKey, string stripeJSSecretKey, string stripeJSAccountID)
         {
             StripeJSPublishableKey = stripeJSPublishableKey;
-            StripeJSApiLoginID = stripeJSApiLoginID;
+            StripeJSSecretKey = stripeJSSecretKey;
             StripeJSAccountID = stripeJSAccountID;
         }
 
@@ -17,7 +17,7 @@
         /// <summary>
         /// APi LoginID: Log into Authorize.net -> Account -> API Credentials & Keys -> "API Login ID" is on the page.
         /// </summary>
-        public string StripeJSApiLoginID { get; set; }
+        public string StripeJSSecretKey { get; set; }
 
         /// <summary>
         /// Log into Authorize.net -> Account -> API Credentials & Keys -> New Transaction Key (WARNING: THIS DISABLES CURRENT TRANSACTION KEYS)

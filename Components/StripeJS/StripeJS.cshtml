@@ -1,4 +1,5 @@
 ﻿@model Generic.StripeJSPaymentGateway.Models.StripeJSViewModel
+    <hr class="mb-4">
     <div id="stripeCard"></div>
     <div id="errorMessages" class="error-message"></div>
     <hr class="mb-4">
@@ -8,6 +9,7 @@
         var script = document.createElement('script');
         script.type = "text/javascript";
         script.src = "https://@(Model.JsDomain)/v3/";
+        script.onload = () => { checkout.loadStrip(); };
         document.body.appendChild(script);
         window.stripeJSLoaded = true;
     }
@@ -18,8 +20,8 @@
                 return result.json();
             }).then((authData) => {
                 checkout.stripe = Stripe(authData.publishableKey);
-                var elements = checkout.stripe.elements();
-                var cardElement = elements.create('card');
+                checkout.elements = checkout.stripe.elements();
+                var cardElement = checkout.elements.create('card');
                 cardElement.mount('#stripeCard');
                 cardElement.on('change', function (event) {
                     var displayError = document.getElementById('errorMessages');
@@ -35,7 +37,7 @@
         }
     }
 
-    checkout.paymentResult = async function (id) {     
+    checkout.paymentResult = async function (id) {
         fetch("/StripeJS/Payment", {
             method: "POST",
             body: ecommerceClass.getJSON({
@@ -50,9 +52,13 @@
         });
     }
 
-    checkout.sendCreateOrder = function (ev) {
+    checkout.sendCreateOrder = async function (ev) {
         ev.preventDefault();
-        document.body.dispatchEvent(checkout.createOrderEvent);
+        if (!checkout.orderGUID) {
+            document.body.dispatchEvent(checkout.createOrderEvent);
+        } else {
+            await checkout.payment(null);
+        }
     }
 
     checkout.payment = async function (ev) {
@@ -66,8 +72,7 @@
             if (paymentIntent.error) {
                 document.getElementById("errorMessages").innerText = paymentIntent.error;
             } else {
-                var elements = checkout.stripe.elements();
-                var cardElement = elements.getElement('card');
+                var cardElement = checkout.elements.getElement('card');
                 checkout.stripe.confirmCardPayment(
                     paymentIntent.clientSecret,
                     {

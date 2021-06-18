@@ -3,7 +3,7 @@
     public interface IStripeJSOptions
     {
         string StripeJSPublishableKey();
-        string StripeJSApiLoginID();
+        string StripeJSSecretKey();
         string StripeJSAccountID();
         string PayentGatewayView();
     }

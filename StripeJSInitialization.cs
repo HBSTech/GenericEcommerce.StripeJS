@@ -2,6 +2,7 @@
 using Stripe;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Generic.StripeJSPaymentGateway
@@ -13,11 +14,12 @@ namespace Generic.StripeJSPaymentGateway
             services.AddSingleton<IStripeJSOptions>(new StripeJSOptions(options));
             StripeConfiguration.AppInfo = new AppInfo
             {
-                Name = "HBS.Kentico.Ecommerce.StripePaymentGateway",
+                Name = Assembly.GetEntryAssembly().GetName().Name,
                 Url = "https://github.com/HBSTech/GenericEcommerce.StripeJS",
-                Version = "1.0.0"
+                Version = Assembly.GetEntryAssembly().GetName().Version.ToString()
             };
             StripeConfiguration.MaxNetworkRetries = 5;
+            StripeConfiguration.ApiKey = options.StripeJSSecretKey;
             return services;
         }
     }
