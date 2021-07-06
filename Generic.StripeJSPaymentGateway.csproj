@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="Kentico.Xperience.AspNetCore.WebApp" Version="13.0.16" />
-    <PackageReference Include="Stripe.net" Version="39.52.0" />
+    <PackageReference Include="Stripe.net" Version="39.55.0" />
   </ItemGroup>
 
   <ItemGroup>

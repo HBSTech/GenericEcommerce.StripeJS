@@ -26,6 +26,7 @@
                 cardElement.on('change', function (event) {
                     var displayError = document.getElementById('errorMessages');
                     if (event.error) {
+                        console.log(event.error);
                         displayError.innerText = event.error.message;
                     } else {
                         displayError.innerText = '';
@@ -85,7 +86,7 @@
                         // Report to the browser that the payment failed, prompting it to
                         // re-show the payment interface, or show an error message and close
                         // the payment interface.
-                        document.getElementById("errorMessages").innerText = confirmResult.error;
+                        document.getElementById("errorMessages").innerText = confirmResult.error.message;
                     } else {
                         // Report to the browser that the confirmation was successful, prompting
                         // it to close the browser payment method collection interface.
@@ -96,7 +97,7 @@
                             // Let Stripe.js handle the rest of the payment flow.
                             stripe.confirmCardPayment(clientSecret).then(function (result) {
                                 if (result.error) {
-                                    document.getElementById("errorMessages").innerText = result.error;
+                                    document.getElementById("errorMessages").innerText = result.error.message;
                                 } else {
                                     checkout.paymentResult(paymentIntent.id);
                                     document.getElementById("errorMessages").innerText = '';
