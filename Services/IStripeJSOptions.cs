@@ -6,5 +6,7 @@
         string StripeJSSecretKey();
         string StripeJSAccountID();
         string PayentGatewayView();
+        string ReCaptchaPublicKey();
+        string ReCaptchaPrivateKey();
     }
 }

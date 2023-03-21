@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CMS.DataEngine;
+using CMS.Ecommerce;
+using CMS.SiteProvider;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -31,6 +34,16 @@ namespace Generic.StripeJSPaymentGateway
         public string PayentGatewayView()
         {
             return StripeJSConfiguration.PayentGatewayView;
+        }
+
+        public string ReCaptchaPublicKey()
+        {
+            return SettingsKeyInfoProvider.GetValue(new SettingsKeyName("CMSReCaptchaPublicKey", new SiteInfoIdentifier(SiteContext.CurrentSiteID)));
+        }
+
+        public string ReCaptchaPrivateKey()
+        {
+            return SettingsKeyInfoProvider.GetValue(new SettingsKeyName("CMSReCaptchaPrivateKey", new SiteInfoIdentifier(SiteContext.CurrentSiteID)));
         }
     }
 }

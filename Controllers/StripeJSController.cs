@@ -13,6 +13,7 @@ using CMS.Globalization;
 using CMS.Helpers;
 using CMS.Core;
 using Stripe;
+using System.Text.Json;
 
 namespace Generic.StripeJSPaymentGateway.Controllers
 {
@@ -20,11 +21,13 @@ namespace Generic.StripeJSPaymentGateway.Controllers
     {
         public IOrderInfoProvider OrderInfoProvider { get; }
         public IStripeJSOptions StripeJSOptions { get; }
+        public IEventLogService EventLogService { get; }
 
-        public StripeJSController(IOrderInfoProvider orderInfoProvider, IStripeJSOptions stripeJSOptions)
+        public StripeJSController(IOrderInfoProvider orderInfoProvider, IStripeJSOptions stripeJSOptions, IEventLogService eventLogService)
         {
             OrderInfoProvider = orderInfoProvider;
             StripeJSOptions = stripeJSOptions;
+            EventLogService = eventLogService;
         }
 
         public async Task<IActionResult> GetAuthorization()
@@ -40,7 +43,32 @@ namespace Generic.StripeJSPaymentGateway.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GetPaymentIntent([FromBody] StripeJSDataModel model)
         {
+
             var order = (await OrderInfoProvider.Get().WhereEquals(nameof(OrderInfo.OrderGUID), model.OrderGUID).TopN(1).GetEnumerableTypedResultAsync()).FirstOrDefault();
+
+            try
+            {
+                using (var client = new WebClient())
+                {
+                    client.BaseAddress = "https://www.google.com/";
+                    var response = client.UploadString("/recaptcha/api/siteverify", JsonSerializer.Serialize(new RecaptchaRequestModel
+                    {
+                        Secret = StripeJSOptions.ReCaptchaPrivateKey(),
+                        Response = model.CaptchaToken
+                    }));
+                    var parsedResponse = JsonSerializer.Deserialize<RecaptchaResponseModel>(response);
+                    if (!parsedResponse.Success)
+                    {
+                        EventLogService.LogInformation("GetPaymentIntent", "Captcha Validation Failed", string.Join('|', parsedResponse.Errors));
+                        return new JsonResult(new { error = $"Captcha Validation Failed.  Please contact us and refrence {order?.OrderID}." });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                EventLogService.LogException("GetPaymentIntent", "Captcha Validation", ex);
+                return new JsonResult(new { error = $"Captcha Validation Failed.  Please contact us and refrence {order?.OrderID}." });
+            }
 
             var mainCurrency = Service.Resolve<ISiteMainCurrencySource>().GetSiteMainCurrency(order.OrderSiteID);
 

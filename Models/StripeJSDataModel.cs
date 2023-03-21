@@ -12,5 +12,8 @@ namespace Generic.StripeJSPaymentGateway.Models
 
         [JsonPropertyName("id")]
         public string PaymentIntentID { get; set; }
+
+        [JsonPropertyName("token")]
+        public string CaptchaToken { get; set; }
     }
 }

@@ -1,117 +1,127 @@
 ﻿@model Generic.StripeJSPaymentGateway.Models.StripeJSViewModel
-    <hr class="mb-4">
-    <div id="stripeCard"></div>
-    <div id="errorMessages" class="error-message"></div>
-    <hr class="mb-4">
-    <button class="btn btn-primary btn-lg btn-block" onclick="checkout.sendCreateOrder(event)" type="submit">Submit Payment</button>
-    <script type="text/javascript" data-initialize>
-    if (!window.stripeJSLoaded) {
-        var script = document.createElement('script');
-        script.type = "text/javascript";
-        script.src = "https://@(Model.JsDomain)/v3/";
-        script.onload = () => { checkout.loadStrip(); };
-        document.body.appendChild(script);
-        window.stripeJSLoaded = true;
-    }
+@inject Generic.StripeJSPaymentGateway.IStripeJSOptions options
+<hr class="mb-4">
+<div id="stripeCard"></div>
+<div id="errorMessages" class="error-message"></div>
+<hr class="mb-4">
+<button class="btn btn-primary btn-lg btn-block" onclick="checkout.sendCreateOrder(event)" type="submit">Submit Payment</button>
+<script type="text/javascript" data-initialize>
+  if (!window.stripeJSLoaded) {
+      var script = document.createElement('script');
+      script.type = "text/javascript";
+      script.src = "https://@(Model.JsDomain)/v3/";
+      script.onload = () => { checkout.loadStrip(); };
+      document.body.appendChild(script);
+      window.stripeJSLoaded = true;
+  }
 
-    checkout.loadStrip = function () {
-        if (Stripe !== undefined) {
-            fetch("/StripeJS/GetAuthorization").then((result) => {
-                return result.json();
-            }).then((authData) => {
-                checkout.stripe = Stripe(authData.publishableKey);
-                checkout.elements = checkout.stripe.elements();
-                var cardElement = checkout.elements.create('card');
-                cardElement.mount('#stripeCard');
-                cardElement.on('change', function (event) {
-                    var displayError = document.getElementById('errorMessages');
-                    if (event.error) {
-                        console.log(event.error);
-                        displayError.innerText = event.error.message;
-                    } else {
-                        displayError.innerText = '';
+  checkout.loadStrip = function () {
+      if (Stripe !== undefined) {
+          fetch("/StripeJS/GetAuthorization").then((result) => {
+              return result.json();
+          }).then((authData) => {
+              checkout.stripe = Stripe(authData.publishableKey);
+              checkout.elements = checkout.stripe.elements();
+              var cardElement = checkout.elements.create('card');
+              cardElement.mount('#stripeCard');
+              cardElement.on('change', function (event) {
+                  var displayError = document.getElementById('errorMessages');
+                  if (event.error) {
+                      console.log(event.error);
+                      displayError.innerText = event.error.message;
+                  } else {
+                      displayError.innerText = '';
+                  }
+              });
+          });
+      } else {
+          setTimeout(() => { this.loadStrip(); }, 200);
+      }
+  }
+
+  checkout.paymentResult = async function (id) {
+      fetch("/StripeJS/Payment", {
+          method: "POST",
+          body: ecommerceClass.getJSON({
+              orderGUID: checkout.orderGUID,
+              id: id
+          }),
+          headers: ecommerceClass.getPostHeaders()
+      }).then((result) => {
+          return result.json();
+      }).then((json) => {
+          document.body.dispatchEvent(checkout.paymentResultEvent(json));
+      });
+  }
+
+  checkout.sendCreateOrder = async function (ev) {
+      ev.preventDefault();
+      if (!checkout.orderGUID) {
+          document.body.dispatchEvent(checkout.createOrderEvent);
+      } else {
+          await checkout.payment(null);
+      }
+  }
+
+  checkout.payment = async function (ev) {
+    grecaptcha.ready(function() {
+        grecaptcha.execute('@options.ReCaptchaPublicKey()', {action: 'submit'}).then(function(token) {
+            checkout.paymentIntent(token, ev);
+        });
+    });
+  };
+
+  checkout.paymentIntent = async function (token, ev) {
+    fetch("/StripeJS/GetPaymentIntent", {
+        method: "POST",
+        body: ecommerceClass.getJSON({
+            orderGUID: checkout.orderGUID,
+            token: token
+        }),
+        headers: ecommerceClass.getPostHeaders()
+    }).then((response) => { return response.json() }).then((paymentIntent) => {
+        if (paymentIntent.error) {
+            document.getElementById("errorMessages").innerText = paymentIntent.error;
+        } else {
+            var cardElement = checkout.elements.getElement('card');
+            checkout.stripe.confirmCardPayment(
+                paymentIntent.clientSecret,
+                {
+                    payment_method: {
+                        card: cardElement
                     }
-                });
+                }
+            ).then(function (confirmResult) {
+                if (confirmResult.error) {
+                    // Report to the browser that the payment failed, prompting it to
+                    // re-show the payment interface, or show an error message and close
+                    // the payment interface.
+                    document.getElementById("errorMessages").innerText = confirmResult.error.message;
+                } else {
+                    // Report to the browser that the confirmation was successful, prompting
+                    // it to close the browser payment method collection interface.
+                    // Check if the PaymentIntent requires any actions and if so let Stripe.js
+                    // handle the flow. If using an API version older than "2019-02-11" instead
+                    // instead check for: `paymentIntent.status === "requires_source_action"`.
+                    if (confirmResult.paymentIntent.status === "requires_action") {
+                        // Let Stripe.js handle the rest of the payment flow.
+                        stripe.confirmCardPayment(clientSecret).then(function (result) {
+                            if (result.error) {
+                                document.getElementById("errorMessages").innerText = result.error.message;
+                            } else {
+                                checkout.paymentResult(paymentIntent.id);
+                                document.getElementById("errorMessages").innerText = '';
+                            }
+                        });
+                    } else {
+                        checkout.paymentResult(paymentIntent.id);
+                        document.getElementById("errorMessages").innerText = '';
+                    }
+                }
             });
-        } else {
-            setTimeout(() => { this.loadStrip(); }, 200);
         }
-    }
-
-    checkout.paymentResult = async function (id) {
-        fetch("/StripeJS/Payment", {
-            method: "POST",
-            body: ecommerceClass.getJSON({
-                orderGUID: checkout.orderGUID,
-                id: id
-            }),
-            headers: ecommerceClass.getPostHeaders()
-        }).then((result) => {
-            return result.json();
-        }).then((json) => {
-            document.body.dispatchEvent(checkout.paymentResultEvent(json));
-        });
-    }
-
-    checkout.sendCreateOrder = async function (ev) {
-        ev.preventDefault();
-        if (!checkout.orderGUID) {
-            document.body.dispatchEvent(checkout.createOrderEvent);
-        } else {
-            await checkout.payment(null);
-        }
-    }
-
-    checkout.payment = async function (ev) {
-        fetch("/StripeJS/GetPaymentIntent", {
-            method: "POST",
-            body: ecommerceClass.getJSON({
-                orderGUID: checkout.orderGUID
-            }),
-            headers: ecommerceClass.getPostHeaders()
-        }).then((response) => { return response.json() }).then((paymentIntent) => {
-            if (paymentIntent.error) {
-                document.getElementById("errorMessages").innerText = paymentIntent.error;
-            } else {
-                var cardElement = checkout.elements.getElement('card');
-                checkout.stripe.confirmCardPayment(
-                    paymentIntent.clientSecret,
-                    {
-                        payment_method: {
-                            card: cardElement
-                        }
-                    }
-                ).then(function (confirmResult) {
-                    if (confirmResult.error) {
-                        // Report to the browser that the payment failed, prompting it to
-                        // re-show the payment interface, or show an error message and close
-                        // the payment interface.
-                        document.getElementById("errorMessages").innerText = confirmResult.error.message;
-                    } else {
-                        // Report to the browser that the confirmation was successful, prompting
-                        // it to close the browser payment method collection interface.
-                        // Check if the PaymentIntent requires any actions and if so let Stripe.js
-                        // handle the flow. If using an API version older than "2019-02-11" instead
-                        // instead check for: `paymentIntent.status === "requires_source_action"`.
-                        if (confirmResult.paymentIntent.status === "requires_action") {
-                            // Let Stripe.js handle the rest of the payment flow.
-                            stripe.confirmCardPayment(clientSecret).then(function (result) {
-                                if (result.error) {
-                                    document.getElementById("errorMessages").innerText = result.error.message;
-                                } else {
-                                    checkout.paymentResult(paymentIntent.id);
-                                    document.getElementById("errorMessages").innerText = '';
-                                }
-                            });
-                        } else {
-                            checkout.paymentResult(paymentIntent.id);
-                            document.getElementById("errorMessages").innerText = '';
-                        }
-                    }
-                });
-            }
-        });
-    };
+    });
+  };
 
 
-    </script>
+</script>
