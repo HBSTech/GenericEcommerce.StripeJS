@@ -8,5 +8,6 @@
         string PayentGatewayView();
         string ReCaptchaPublicKey();
         string ReCaptchaPrivateKey();
-    }
+    string GetObscurificationKey();
+  }
 }

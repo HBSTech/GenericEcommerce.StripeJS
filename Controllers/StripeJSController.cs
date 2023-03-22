@@ -36,7 +36,7 @@ namespace Generic.StripeJSPaymentGateway.Controllers
         {
             var model = new AuthorizationDataModel
             {
-                PublishableKey = EncodeBase64(EncodeBase64(StripeJSOptions.StripeJSPublishableKey() + "VkVSR1QwMUhUblJpU0dSaFZsaENWVlJFUW10aVIxSkdVbXBHYTFJeWFESlpNakZ6VG14c1dWVnVRbWxOYWxFNQ==")) 
+                PublishableKey = EncodeBase64(EncodeBase64(StripeJSOptions.StripeJSPublishableKey() + StripeJSOptions.GetObscurificationKey())) 
             };
             return new JsonResult(model);
         }

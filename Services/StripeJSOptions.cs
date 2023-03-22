@@ -45,5 +45,10 @@ namespace Generic.StripeJSPaymentGateway
         {
             return SettingsKeyInfoProvider.GetValue(new SettingsKeyName("CMSReCaptchaPrivateKey", new SiteInfoIdentifier(SiteContext.CurrentSiteID)));
         }
+
+        public string GetObscurificationKey()
+    {
+            return StripeJSConfiguration.StripeJSObscurificationKey;
+    }
     }
 }
