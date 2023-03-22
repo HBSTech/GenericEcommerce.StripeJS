@@ -30,11 +30,13 @@ namespace Generic.StripeJSPaymentGateway.Controllers
             EventLogService = eventLogService;
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GetAuthorization()
         {
             var model = new AuthorizationDataModel
             {
-                PublishableKey = StripeJSOptions.StripeJSPublishableKey()
+                PublishableKey = EncodeBase64(EncodeBase64(StripeJSOptions.StripeJSPublishableKey() + "VkVSR1QwMUhUblJpU0dSaFZsaENWVlJFUW10aVIxSkdVbXBHYTFJeWFESlpNakZ6VG14c1dWVnVRbWxOYWxFNQ==")) 
             };
             return new JsonResult(model);
         }
@@ -45,30 +47,6 @@ namespace Generic.StripeJSPaymentGateway.Controllers
         {
 
             var order = (await OrderInfoProvider.Get().WhereEquals(nameof(OrderInfo.OrderGUID), model.OrderGUID).TopN(1).GetEnumerableTypedResultAsync()).FirstOrDefault();
-
-            try
-            {
-                using (var client = new WebClient())
-                {
-                    client.BaseAddress = "https://www.google.com/";
-                    var response = client.UploadString("/recaptcha/api/siteverify", JsonSerializer.Serialize(new RecaptchaRequestModel
-                    {
-                        Secret = StripeJSOptions.ReCaptchaPrivateKey(),
-                        Response = model.CaptchaToken
-                    }));
-                    var parsedResponse = JsonSerializer.Deserialize<RecaptchaResponseModel>(response);
-                    if (!parsedResponse.Success)
-                    {
-                        EventLogService.LogInformation("GetPaymentIntent", "Captcha Validation Failed", string.Join('|', parsedResponse.Errors));
-                        return new JsonResult(new { error = $"Captcha Validation Failed.  Please contact us and refrence {order?.OrderID}." });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                EventLogService.LogException("GetPaymentIntent", "Captcha Validation", ex);
-                return new JsonResult(new { error = $"Captcha Validation Failed.  Please contact us and refrence {order?.OrderID}." });
-            }
 
             var mainCurrency = Service.Resolve<ISiteMainCurrencySource>().GetSiteMainCurrency(order.OrderSiteID);
 
@@ -183,6 +161,11 @@ namespace Generic.StripeJSPaymentGateway.Controllers
                 return new JsonResult(new { Message = $"Failed Transaction. {e?.StripeError?.Code}: {e?.StripeError?.Message}.  Please contact us and refrence {order?.OrderID}." });
             }
             return new JsonResult(new { Message = "Transaction Failed." });
+        }
+
+        private string EncodeBase64(string str)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(str));
         }
     }
 }

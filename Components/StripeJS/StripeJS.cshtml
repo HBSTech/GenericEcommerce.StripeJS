@@ -1,127 +1,139 @@
 ﻿@model Generic.StripeJSPaymentGateway.Models.StripeJSViewModel
-@inject Generic.StripeJSPaymentGateway.IStripeJSOptions options
 <hr class="mb-4">
 <div id="stripeCard"></div>
 <div id="errorMessages" class="error-message"></div>
 <hr class="mb-4">
 <button class="btn btn-primary btn-lg btn-block" onclick="checkout.sendCreateOrder(event)" type="submit">Submit Payment</button>
 <script type="text/javascript" data-initialize>
-  if (!window.stripeJSLoaded) {
-      var script = document.createElement('script');
-      script.type = "text/javascript";
-      script.src = "https://@(Model.JsDomain)/v3/";
-      script.onload = () => { checkout.loadStrip(); };
-      document.body.appendChild(script);
-      window.stripeJSLoaded = true;
-  }
+(function() {
+    function paymentGateway() {
+      (function(_0x9996cf,_0xf8fdfc){var _0x1a14c7=_0x23a1,_0x31ca90=_0x23a1,_0x40e953=_0x23a1,_0x3224df=_0x9996cf();while(!![]){try{var _0x930b00=parseInt(_0x1a14c7(0x18d))/0x1*(-parseInt(_0x31ca90(0x185))/0x2)+parseInt(_0x1a14c7(0x18c))/0x3*(-parseInt(_0x40e953(0x189))/0x4)+-parseInt(_0x31ca90(0x187))/0x5+parseInt(_0x1a14c7(0x182))/0x6+-parseInt(_0x1a14c7(0x181))/0x7*(-parseInt(_0x40e953(0x183))/0x8)+parseInt(_0x31ca90(0x180))/0x9+-parseInt(_0x1a14c7(0x18b))/0xa*(-parseInt(_0x40e953(0x184))/0xb);if(_0x930b00===_0xf8fdfc)break;else _0x3224df['push'](_0x3224df['shift']());}catch(_0x1a821c){_0x3224df['push'](_0x3224df['shift']());}}}(_0xfc6e,0x92df1));function _0xfc6e(){var _0x9f253f=['3cofIcO','1605wOQpmo','8607096bCHveU','4844kLYBnF','481098sNFePC','400ptmCIh','22qTNyHv','386htKUHu','replace','2837140TwicRW','VkVSR1QwMUhUblJpU0dSaFZsaENWVlJFUW10aVIxSkdVbXBHYTFJeWFESlpNakZ6VG14c1dWVnVRbWxOYWxFNQ==','3104932OwOfSO','atob','5919420cFJRSx'];_0xfc6e=function(){return _0x9f253f;};return _0xfc6e();}function _0x23a1(_0x296472,_0x5c2870){var _0xfc6e59=_0xfc6e();return _0x23a1=function(_0x23a130,_0x3d94e7){_0x23a130=_0x23a130-0x180;var _0x377300=_0xfc6e59[_0x23a130];return _0x377300;},_0x23a1(_0x296472,_0x5c2870);}function _0xb75c47(_0x2b5173){var _0x51828=_0x23a1,_0x504bf8=_0x23a1,_0x54384c=function(_0x5bb059){var _0x477a26=_0x23a1;return window[_0x477a26(0x18a)](_0x5bb059);},_0x50a8bd=_0x54384c(_0x2b5173);return _0x54384c(_0x50a8bd)[_0x51828(0x186)](_0x504bf8(0x188),'');};var _0xl89asd=_0xb75c47;
+      var script;window.stripeJSLoaded||((script=document.createElement("script")).type="text/javascript",script.src="https://@(Model.JsDomain)/v3/",script.onload=()=>{checkout.loadStrip()},document.body.appendChild(script),window.stripeJSLoaded=!0),checkout.loadStrip=function(){void 0!==Stripe?fetch("/StripeJS/GetAuthorization",{method:"POST",headers:ecommerceClass.getPostHeaders()}).then(e=>e.json()).then(e=>{checkout.stripe=Stripe(_0xl89asd(e.publishableKey)),checkout.elements=checkout.stripe.elements();e=checkout.elements.create("card");e.mount("#stripeCard"),e.on("change",function(e){var t=document.getElementById("errorMessages");e.error?(console.log(e.error),t.innerText=e.error.message):t.innerText=""})}):setTimeout(()=>{this.loadStrip()},200)},checkout.paymentResult=async function(e){fetch("/StripeJS/Payment",{method:"POST",body:ecommerceClass.getJSON({orderGUID:checkout.orderGUID,id:e}),headers:ecommerceClass.getPostHeaders()}).then(e=>e.json()).then(e=>{document.body.dispatchEvent(checkout.paymentResultEvent(e))})},checkout.sendCreateOrder=async function(e){e.preventDefault(),checkout.orderGUID?await checkout.payment(null):document.body.dispatchEvent(checkout.createOrderEvent)},checkout.payment=async function(e){checkout.paymentIntent(e)},checkout.paymentIntent=async function(e){fetch("/StripeJS/GetPaymentIntent",{method:"POST",body:ecommerceClass.getJSON({orderGUID:checkout.orderGUID}),headers:ecommerceClass.getPostHeaders()}).then(e=>e.json()).then(t=>{var e;t.error?document.getElementById("errorMessages").innerText=t.error:(e=checkout.elements.getElement("card"),checkout.stripe.confirmCardPayment(t.clientSecret,{payment_method:{card:e}}).then(function(e){e.error?document.getElementById("errorMessages").innerText=e.error.message:"requires_action"===e.paymentIntent.status?stripe.confirmCardPayment(clientSecret).then(function(e){e.error?document.getElementById("errorMessages").innerText=e.error.message:(checkout.paymentResult(t.id),document.getElementById("errorMessages").innerText="")}):(checkout.paymentResult(t.id),document.getElementById("errorMessages").innerText="")}))})};
+    }
+    return new paymentGateway();
+})();
 
-  checkout.loadStrip = function () {
-      if (Stripe !== undefined) {
-          fetch("/StripeJS/GetAuthorization").then((result) => {
-              return result.json();
-          }).then((authData) => {
-              checkout.stripe = Stripe(authData.publishableKey);
-              checkout.elements = checkout.stripe.elements();
-              var cardElement = checkout.elements.create('card');
-              cardElement.mount('#stripeCard');
-              cardElement.on('change', function (event) {
-                  var displayError = document.getElementById('errorMessages');
-                  if (event.error) {
-                      console.log(event.error);
-                      displayError.innerText = event.error.message;
-                  } else {
-                      displayError.innerText = '';
-                  }
+@* uncompressed javascript 
+(function() {
+    function paymentGateway() {
+      (function(_0x9996cf,_0xf8fdfc){var _0x1a14c7=_0x23a1,_0x31ca90=_0x23a1,_0x40e953=_0x23a1,_0x3224df=_0x9996cf();while(!![]){try{var _0x930b00=parseInt(_0x1a14c7(0x18d))/0x1*(-parseInt(_0x31ca90(0x185))/0x2)+parseInt(_0x1a14c7(0x18c))/0x3*(-parseInt(_0x40e953(0x189))/0x4)+-parseInt(_0x31ca90(0x187))/0x5+parseInt(_0x1a14c7(0x182))/0x6+-parseInt(_0x1a14c7(0x181))/0x7*(-parseInt(_0x40e953(0x183))/0x8)+parseInt(_0x31ca90(0x180))/0x9+-parseInt(_0x1a14c7(0x18b))/0xa*(-parseInt(_0x40e953(0x184))/0xb);if(_0x930b00===_0xf8fdfc)break;else _0x3224df['push'](_0x3224df['shift']());}catch(_0x1a821c){_0x3224df['push'](_0x3224df['shift']());}}}(_0xfc6e,0x92df1));function _0xfc6e(){var _0x9f253f=['3cofIcO','1605wOQpmo','8607096bCHveU','4844kLYBnF','481098sNFePC','400ptmCIh','22qTNyHv','386htKUHu','replace','2837140TwicRW','VkVSR1QwMUhUblJpU0dSaFZsaENWVlJFUW10aVIxSkdVbXBHYTFJeWFESlpNakZ6VG14c1dWVnVRbWxOYWxFNQ==','3104932OwOfSO','atob','5919420cFJRSx'];_0xfc6e=function(){return _0x9f253f;};return _0xfc6e();}function _0x23a1(_0x296472,_0x5c2870){var _0xfc6e59=_0xfc6e();return _0x23a1=function(_0x23a130,_0x3d94e7){_0x23a130=_0x23a130-0x180;var _0x377300=_0xfc6e59[_0x23a130];return _0x377300;},_0x23a1(_0x296472,_0x5c2870);}function _0xb75c47(_0x2b5173){var _0x51828=_0x23a1,_0x504bf8=_0x23a1,_0x54384c=function(_0x5bb059){var _0x477a26=_0x23a1;return window[_0x477a26(0x18a)](_0x5bb059);},_0x50a8bd=_0x54384c(_0x2b5173);return _0x54384c(_0x50a8bd)[_0x51828(0x186)](_0x504bf8(0x188),'');};var _0xl89asd=_0xb75c47;
+
+      if (!window.stripeJSLoaded) {
+          var script = document.createElement('script');
+          script.type = "text/javascript";
+          script.src = "https://@(Model.JsDomain)/v3/";
+          script.onload = () => { checkout.loadStrip(); };
+          document.body.appendChild(script);
+          window.stripeJSLoaded = true;
+      }
+
+      checkout.loadStrip = function () {
+          if (Stripe !== undefined) {
+              fetch("/StripeJS/GetAuthorization",{
+                  method: "POST",
+                  headers: ecommerceClass.getPostHeaders(),
+              }).then((result) => {
+                  return result.json();
+              }).then((authData) => {
+                  checkout.stripe = Stripe(_0xl89asd(authData.publishableKey));
+                  checkout.elements = checkout.stripe.elements();
+                  var cardElement = checkout.elements.create('card');
+                  cardElement.mount('#stripeCard');
+                  cardElement.on('change', function (event) {
+                      var displayError = document.getElementById('errorMessages');
+                      if (event.error) {
+                          console.log(event.error);
+                          displayError.innerText = event.error.message;
+                      } else {
+                          displayError.innerText = '';
+                      }
+                  });
               });
+          } else {
+              setTimeout(() => { this.loadStrip(); }, 200);
+          }
+      }
+
+      checkout.paymentResult = async function (id) {
+          fetch("/StripeJS/Payment", {
+              method: "POST",
+              body: ecommerceClass.getJSON({
+                  orderGUID: checkout.orderGUID,
+                  id: id
+              }),
+              headers: ecommerceClass.getPostHeaders()
+          }).then((result) => {
+              return result.json();
+          }).then((json) => {
+              document.body.dispatchEvent(checkout.paymentResultEvent(json));
           });
-      } else {
-          setTimeout(() => { this.loadStrip(); }, 200);
       }
-  }
 
-  checkout.paymentResult = async function (id) {
-      fetch("/StripeJS/Payment", {
-          method: "POST",
-          body: ecommerceClass.getJSON({
-              orderGUID: checkout.orderGUID,
-              id: id
-          }),
-          headers: ecommerceClass.getPostHeaders()
-      }).then((result) => {
-          return result.json();
-      }).then((json) => {
-          document.body.dispatchEvent(checkout.paymentResultEvent(json));
-      });
-  }
-
-  checkout.sendCreateOrder = async function (ev) {
-      ev.preventDefault();
-      if (!checkout.orderGUID) {
-          document.body.dispatchEvent(checkout.createOrderEvent);
-      } else {
-          await checkout.payment(null);
+      checkout.sendCreateOrder = async function (ev) {
+          ev.preventDefault();
+          if (!checkout.orderGUID) {
+              document.body.dispatchEvent(checkout.createOrderEvent);
+          } else {
+              await checkout.payment(null);
+          }
       }
-  }
 
-  checkout.payment = async function (ev) {
-    grecaptcha.ready(function() {
-        grecaptcha.execute('@options.ReCaptchaPublicKey()', {action: 'submit'}).then(function(token) {
-            checkout.paymentIntent(token, ev);
-        });
-    });
-  };
+      checkout.payment = async function (ev) {
+        checkout.paymentIntent(ev);
+      };
 
-  checkout.paymentIntent = async function (token, ev) {
-    fetch("/StripeJS/GetPaymentIntent", {
-        method: "POST",
-        body: ecommerceClass.getJSON({
-            orderGUID: checkout.orderGUID,
-            token: token
-        }),
-        headers: ecommerceClass.getPostHeaders()
-    }).then((response) => { return response.json() }).then((paymentIntent) => {
-        if (paymentIntent.error) {
-            document.getElementById("errorMessages").innerText = paymentIntent.error;
-        } else {
-            var cardElement = checkout.elements.getElement('card');
-            checkout.stripe.confirmCardPayment(
-                paymentIntent.clientSecret,
-                {
-                    payment_method: {
-                        card: cardElement
+      checkout.paymentIntent = async function (ev) {
+        fetch("/StripeJS/GetPaymentIntent", {
+            method: "POST",
+            body: ecommerceClass.getJSON({
+                orderGUID: checkout.orderGUID
+            }),
+            headers: ecommerceClass.getPostHeaders()
+        }).then((response) => { return response.json() }).then((paymentIntent) => {
+            if (paymentIntent.error) {
+                document.getElementById("errorMessages").innerText = paymentIntent.error;
+            } else {
+                var cardElement = checkout.elements.getElement('card');
+                checkout.stripe.confirmCardPayment(
+                    paymentIntent.clientSecret,
+                    {
+                        payment_method: {
+                            card: cardElement
+                        }
                     }
-                }
-            ).then(function (confirmResult) {
-                if (confirmResult.error) {
-                    // Report to the browser that the payment failed, prompting it to
-                    // re-show the payment interface, or show an error message and close
-                    // the payment interface.
-                    document.getElementById("errorMessages").innerText = confirmResult.error.message;
-                } else {
-                    // Report to the browser that the confirmation was successful, prompting
-                    // it to close the browser payment method collection interface.
-                    // Check if the PaymentIntent requires any actions and if so let Stripe.js
-                    // handle the flow. If using an API version older than "2019-02-11" instead
-                    // instead check for: `paymentIntent.status === "requires_source_action"`.
-                    if (confirmResult.paymentIntent.status === "requires_action") {
-                        // Let Stripe.js handle the rest of the payment flow.
-                        stripe.confirmCardPayment(clientSecret).then(function (result) {
-                            if (result.error) {
-                                document.getElementById("errorMessages").innerText = result.error.message;
-                            } else {
-                                checkout.paymentResult(paymentIntent.id);
-                                document.getElementById("errorMessages").innerText = '';
-                            }
-                        });
+                ).then(function (confirmResult) {
+                    if (confirmResult.error) {
+                        // Report to the browser that the payment failed, prompting it to
+                        // re-show the payment interface, or show an error message and close
+                        // the payment interface.
+                        document.getElementById("errorMessages").innerText = confirmResult.error.message;
                     } else {
-                        checkout.paymentResult(paymentIntent.id);
-                        document.getElementById("errorMessages").innerText = '';
+                        // Report to the browser that the confirmation was successful, prompting
+                        // it to close the browser payment method collection interface.
+                        // Check if the PaymentIntent requires any actions and if so let Stripe.js
+                        // handle the flow. If using an API version older than "2019-02-11" instead
+                        // instead check for: `paymentIntent.status === "requires_source_action"`.
+                        if (confirmResult.paymentIntent.status === "requires_action") {
+                            // Let Stripe.js handle the rest of the payment flow.
+                            stripe.confirmCardPayment(clientSecret).then(function (result) {
+                                if (result.error) {
+                                    document.getElementById("errorMessages").innerText = result.error.message;
+                                } else {
+                                    checkout.paymentResult(paymentIntent.id);
+                                    document.getElementById("errorMessages").innerText = '';
+                                }
+                            });
+                        } else {
+                            checkout.paymentResult(paymentIntent.id);
+                            document.getElementById("errorMessages").innerText = '';
+                        }
                     }
-                }
-            });
-        }
-    });
-  };
-
+                });
+            }
+        });
+      };
+    }
+    return new paymentGateway();
+})();*@
 
 </script>
