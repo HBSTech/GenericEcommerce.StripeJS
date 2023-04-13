@@ -6,7 +6,7 @@
     <Authors>Heartland Business Systems | jhess@hbs.net</Authors>
     <Company>Heartland Business Systems</Company>
     <PackageId>HBS.Kentico.Ecommerce.StripeJSPaymentGateway</PackageId>
-    <Version>13.5.3</Version>
+    <Version>13.5.6</Version>
     <Product>HBS.Kentico.Ecommerce.StripeJSPaymentGateway</Product>
     <PackageProjectUrl>https://github.com/HBSTech/GenericEcommerce.StripeJS</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HBSTech/GenericEcommerce.StripeJS</RepositoryUrl>
@@ -16,9 +16,9 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>hbs-icon.png</PackageIcon>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageReleaseNotes>Obscured the stripe public secret</PackageReleaseNotes>
-    <AssemblyVersion>13.5.3</AssemblyVersion>
-    <FileVersion>13.5.3</FileVersion>
+    <PackageReleaseNotes>Resolved a bug with the api keys</PackageReleaseNotes>
+    <AssemblyVersion>13.5.6</AssemblyVersion>
+    <FileVersion>13.5.6</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

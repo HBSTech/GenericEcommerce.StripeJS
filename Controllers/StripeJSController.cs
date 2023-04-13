@@ -14,6 +14,7 @@ using CMS.Helpers;
 using CMS.Core;
 using Stripe;
 using System.Text.Json;
+using System.IO;
 
 namespace Generic.StripeJSPaymentGateway.Controllers
 {
@@ -45,6 +46,36 @@ namespace Generic.StripeJSPaymentGateway.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GetPaymentIntent([FromBody] StripeJSDataModel model)
         {
+            using (var client = new WebClient())
+            {
+                client.BaseAddress = "https://www.google.com";
+                string responseText;
+                try
+                {
+                    var response = client.UploadString($"recaptcha/api/siteverify?secret={StripeJSOptions.ReCaptchaPrivateKey()}&response={model.CaptchaToken}", "");
+                    var responseModel = JsonSerializer.Deserialize<RecaptchaResponseModel>(response);
+                    if(!responseModel.Success)
+                    {
+                        return new JsonResult(new { error = string.Join(',',responseModel.Errors) });
+                    }
+                }
+                catch (WebException ex)
+                {
+                    var responseStream = ex.Response?.GetResponseStream();
+
+                    if (responseStream != null)
+                    {
+                        using var reader = new StreamReader(responseStream);
+                        responseText = reader.ReadToEnd();
+                        return new JsonResult(new { error = responseText });
+                    }
+                }
+                catch(Exception ex)
+                {
+                    return new JsonResult(new { error = ex.InnerException });
+
+                }
+            }
 
             var order = (await OrderInfoProvider.Get().WhereEquals(nameof(OrderInfo.OrderGUID), model.OrderGUID).TopN(1).GetEnumerableTypedResultAsync()).FirstOrDefault();
 
@@ -78,7 +109,7 @@ namespace Generic.StripeJSPaymentGateway.Controllers
             {
                 if (e?.StripeError?.Type == "rate_limit")
                 {
-                    return new JsonResult(new { Message = "Failed Transaction. Rate Limit reached.  Please wait 60 seconds and try again" });
+                    return new JsonResult(new { error = "Failed Transaction. Rate Limit reached.  Please wait 60 seconds and try again" });
                 }
                 else
                 {
